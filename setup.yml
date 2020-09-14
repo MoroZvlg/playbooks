@@ -1,0 +1,50 @@
+---
+- hosts: app
+  become: yes
+  gather_facts: no
+  vars:
+    env_vars: |
+      DOCKER_USER=MoroZvlg
+      DOCKER_PASSWORD=password
+      RABBITMQ_HOST=127.0.0.1
+      RABBITMQ_USER=ads
+      RABBITMQ_PASSWORD=password
+      ADS_DATABASE_URL=postgresql://ads:password@localhost:5432/ads_microservice_production
+      AUTH_DATABASE_URL=postgresql://auth:password@localhost:5432/auth_microservice_production
+      RACK_ENV=production
+  tasks:
+    - name: Add Docker GPG apt Key
+      become: yes
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      become: yes
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu bionic stable
+        state: present
+
+    - name: Update apt and install docker-ce
+      become: yes
+      apt:
+        update_cache: yes
+        name: docker-ce
+        state: latest
+
+    - name: Install pip
+      become: yes
+      apt:
+        update_cache: yes
+        name: python3-pip
+        state: latest
+
+    - name: Install Docker Module for Python
+      pip:
+        name: docker
+        state: present
+
+    - name: ensure env file is uploaded
+      copy:
+        content: '{{ env_vars }}'
+        dest: '/home/{{ ansible_user }}/.env'

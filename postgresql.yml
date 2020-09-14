@@ -1,0 +1,77 @@
+---
+- hosts: db
+  become: yes
+  gather_facts: no
+  tasks:
+    - name: Ensure apt cache is up to date
+      apt:
+        update_cache: yes
+        cache_valid_time: 86400
+    - name: ensure packeges are installed
+      apt:
+        name:
+          - postgresql
+          - libpq-dev
+          - python3-psycopg2
+          - acl
+- hosts: db
+  become: yes
+  become_user: postgres
+  gather_facts: no
+  vars:
+    database: ads_microservice_production
+    user: ads
+    password: password
+  tasks:
+    - name: ensure database is c1reated
+      postgresql_db:
+        name: '{{ database }}'
+    - name: ensure user has access
+      postgresql_user:
+        db: '{{ database }}'
+        name: '{{ user }}'
+        password: '{{ password }}'
+        priv: ALL
+    - name: ensure user has no extra privileges
+      postgresql_user:
+        db: '{{ database }}'
+        name: '{{ user }}'
+        role_attr_flags: NOSUPERUSER,NOCREATEDB
+    - name: ensure other users can't access to database
+      postgresql_privs:
+        db: '{{ database }}'
+        role: PUBLIC
+        type: database
+        priv: ALL
+        state: absent
+
+- hosts: db
+  become: yes
+  become_user: postgres
+  gather_facts: no
+  vars:
+    database: auth_microservice_production
+    user: auth
+    password: password
+  tasks:
+    - name: ensure database is c1reated
+      postgresql_db:
+        name: '{{ database }}'
+    - name: ensure user has access
+      postgresql_user:
+        db: '{{ database }}'
+        name: '{{ user }}'
+        password: '{{ password }}'
+        priv: ALL
+    - name: ensure user has no extra privileges
+      postgresql_user:
+        db: '{{ database }}'
+        name: '{{ user }}'
+        role_attr_flags: NOSUPERUSER,NOCREATEDB
+    - name: ensure other users can't access to database
+      postgresql_privs:
+        db: '{{ database }}'
+        role: PUBLIC
+        type: database
+        priv: ALL
+        state: absent

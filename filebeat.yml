@@ -1,0 +1,39 @@
+---
+- hosts: app
+  become: yes
+  gather_facts: no
+  tasks:
+    - name: ensure filebeat trsuted key is added
+      apt_key:
+        url: 'https://artifacts.elastic.co/GPG-KEY-elasticsearch'
+        state: present
+
+    - name: ensure filebeat repositories are added
+      apt_repository:
+        repo: '{{ item }}'
+        state: present
+      with_items:
+        - 'deb https://artifacts.elastic.co/packages/7.x/apt stable main'
+
+    - name: ensure filebeat installed
+      apt:
+        name: filebeat
+        state: present
+
+    - name: ensure filebeat config uploaded
+      copy:
+        src: filebeat_conf.yml
+        dest: /etc/filebeat/filebeat.yml
+      notify: restart filebeat
+
+    - name: ensure filebeat started
+      service:
+        name: filebeat
+        state: started
+        enabled: true
+
+  handlers:
+    - name: restart filebeat
+      service:
+        name: filebeat
+        state: restarted

@@ -1,0 +1,27 @@
+---
+- hosts: elastic_stack
+  become: yes
+  gather_facts: no
+  tasks:
+    - name: ensure kibana trsuted key is added
+      apt_key:
+        url: 'https://artifacts.elastic.co/GPG-KEY-elasticsearch'
+        state: present
+
+    - name: ensure kibana repositories are added
+      apt_repository:
+        repo: '{{ item }}'
+        state: present
+      with_items:
+        - 'deb https://artifacts.elastic.co/packages/7.x/apt stable main'
+
+    - name: ensure kibana installed
+      apt:
+        name: kibana
+        state: present
+
+    - name: ensure kibana is started
+      service:
+        name: kibana
+        state: started
+        enabled: true
